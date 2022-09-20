@@ -1,4 +1,5 @@
 import os
+from queue import Empty
 from flask import Flask, request, jsonify, abort
 from sqlalchemy import exc
 import json
@@ -28,6 +29,19 @@ CORS(app)
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
+@app.route('/drinks', methods=['GET'])
+def get_drinks():
+    drinks = Drink.query.all()
+
+    if drinks is Empty:
+        abort(404)
+
+    drink_short = [ drink.short() for drink in drinks]
+
+    return jsonify({
+       "success":True,
+       "drinks":drink_short 
+    })
 
 
 '''
@@ -101,6 +115,13 @@ def unprocessable(error):
                     }), 404
 
 '''
+@app.errorhandler(404)
+def unprocessable(error):
+    return jsonify({
+        "success": False,
+        "error": 404,
+        "message": "resource not found"
+    }), 404
 
 '''
 @TODO implement error handler for 404
