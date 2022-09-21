@@ -1,5 +1,6 @@
 import os
 from queue import Empty
+from turtle import title
 from flask import Flask, request, jsonify, abort
 from sqlalchemy import exc
 import json
@@ -74,7 +75,18 @@ def get_drink(jwt):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
         or appropriate status code indicating reason for failure
 '''
-
+@app.route('/drinks', methods=['POST'])
+@requires_auth('post:drinks')
+def create_drink(jwt):
+    body = request.get_json()
+    new_title = body.get('title', None)
+    new_recipe = json.dumps(body.get('recipe',None))
+    drink = Drink( title = new_title, recipe = new_recipe)
+    drink.insert()
+    return jsonify({
+        'success': True,
+        "drinks": drink.long()
+    })
 
 '''
 @TODO implement endpoint
@@ -87,7 +99,30 @@ def get_drink(jwt):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
         or appropriate status code indicating reason for failure
 '''
+@app.route('/drinks/<int:id>', methods=['PATCH'])
+@requires_auth('patch:drinks')
+def update_drink(jwt, id):
+    drink = Drink.query.get(id)
+    body = request.get_json()
+    new_title = body.get('title',None)
+    new_recipe = body.get('recipe', None)
 
+    if drink is None:
+        abort(404)
+
+    if new_title is not None:
+        drink.title = new_title
+  
+
+    if new_recipe is not None:
+        new_recipe = json.dumps(new_recipe)
+        drink.recipe = new_recipe
+   
+    drink.insert()
+    return jsonify({
+        "success": True,
+        "drinks": drink.long()
+    })
 
 '''
 @TODO implement endpoint
@@ -99,6 +134,19 @@ def get_drink(jwt):
     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
+@app.route('/drinks/<int:id>', methods=['DELETE'])
+@requires_auth('patch:drinks')
+def delete_drink(jwt, id):
+    drink = Drink.query.get(id)
+
+    if drink is None:
+        abort(404)
+    
+    drink.delete()
+    return jsonify({
+        "success": True,
+        "delete": id
+    })
 
 
 # Error Handling
