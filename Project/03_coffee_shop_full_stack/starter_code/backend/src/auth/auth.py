@@ -20,6 +20,84 @@ class AuthError(Exception):
         self.status_code = status_code
 
 
+'''
+@TODO implement verify_decode_jwt(token) method
+    @INPUTS
+        token: a json web token (string)
+
+    it should be an Auth0 token with key id (kid)
+    it should verify the token using Auth0 /.well-known/jwks.json
+    it should decode the payload from the token
+    it should validate the claims
+    return the decoded payload
+
+    !!NOTE urlopen has a common certificate error described here: https://stackoverflow.com/questions/50236117/scraping-ssl-certificate-verify-failed-error-for-http-en-wikipedia-org
+
+
+def verify_decode_jwt(token):
+    raise Exception('Not Implemented')
+'''
+
+def verify_decode_jwt(token):
+    #Get Data In Header
+    jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
+    jwks = json.loads(jsonurl.read())
+
+    # Get data in header
+    unverified_header = jwt.get_unverified_header(token)
+
+    # Choose key
+    rsa_key = {}
+    if 'kid' not in unverified_header:
+        raise AuthError({
+            'code': 'invalid_header',
+            'description':'Authorization malformed'
+        }, 401)
+
+    for key in jwks['keys']:
+        if key['kid'] == unverified_header['kid']:
+            rsa_key = {
+                'kty': key['kty'],
+                'kid':key['kid'],
+                'use': key['use'],
+                'n': key['n'],
+                'e': key['e']
+            }
+    # Final verification
+    if rsa_key:
+        try:
+            # use key to validate
+            payload = jwt.decode(
+                token,
+                rsa_key,
+                algorithms=ALGORITHMS,
+                audience=API_AUDIENCE,
+                issuer='https://' + AUTH0_DOMAIN + '/'
+            )
+            return payload
+        except jwt.ExpiredSignatureError:
+            raise AuthError({
+                'code': 'token_expired',
+                'description': 'Token expired'
+            }, 401)
+
+        except jwt.JWTClaimsError:
+            raise AuthError({
+                'code': 'invalid_claims',
+                'description': 'Incorrect claims. Please check the audience and issure'
+            }, 401)
+
+        except Exception:
+            raise AuthError({
+                'code': 'invalid_claims',
+                'description': 'Unable to parse authentication token.'
+            }, 400)
+
+    raise AuthError({
+        'code': 'invalid_header',
+        'description': 'Unable to find the appropraite key'
+    },400)
+
 ## Auth Header
 
 '''
@@ -30,8 +108,30 @@ class AuthError(Exception):
         it should raise an AuthError if the header is malformed
     return the token part of the header
 '''
+
 def get_token_auth_header():
-   raise Exception('Not Implemented')
+    if 'Authorization' not in request.headers:
+         raise AuthError({
+                'code': 'invalid_claims',
+                'description': 'No header found'
+            }, 401)
+ 
+    auth_header = request.headers['Authorization']
+    auth_path = auth_header.split(' ')
+
+    if len(auth_path) != 2:
+         raise AuthError({
+                'code': 'invalid_claims',
+                'description': 'Wrong Claims'
+            }, 401)
+    
+    if auth_path[0].lower() != 'bearer':
+        raise AuthError({
+                'code': 'invalid_claims',
+                'description': 'Incorrect jwt'
+            }, 401)
+    
+    return(auth_path[1])
 
 '''
 @TODO implement check_permissions(permission, payload) method
@@ -47,21 +147,7 @@ def get_token_auth_header():
 def check_permissions(permission, payload):
     raise Exception('Not Implemented')
 
-'''
-@TODO implement verify_decode_jwt(token) method
-    @INPUTS
-        token: a json web token (string)
 
-    it should be an Auth0 token with key id (kid)
-    it should verify the token using Auth0 /.well-known/jwks.json
-    it should decode the payload from the token
-    it should validate the claims
-    return the decoded payload
-
-    !!NOTE urlopen has a common certificate error described here: https://stackoverflow.com/questions/50236117/scraping-ssl-certificate-verify-failed-error-for-http-en-wikipedia-org
-'''
-def verify_decode_jwt(token):
-    raise Exception('Not Implemented')
 
 '''
 @TODO implement @requires_auth(permission) decorator method
