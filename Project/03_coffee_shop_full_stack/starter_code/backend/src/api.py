@@ -53,6 +53,17 @@ def get_drinks():
         or appropriate status code indicating reason for failure
 '''
 
+@app.route('/drinks-detail', methods=['GET'])
+@requires_auth('get:drinks-detail')
+def get_drink(jwt):
+    drinks = Drink.query.all()
+
+    drink_long = [ drink.long() for drink in drinks]
+    return jsonify({
+        "success":True,
+        "drinks": drink_long
+    })
+
 
 '''
 @TODO implement endpoint

@@ -145,7 +145,19 @@ def get_token_auth_header():
     return true otherwise
 '''
 def check_permissions(permission, payload):
-    raise Exception('Not Implemented')
+    if 'permissions' not in payload:
+        raise AuthError({
+            'code': 'invalid_claim',
+            'description': 'Permission not included in jwt'
+        },400)
+
+    if permission not in payload['permissions']:
+        raise AuthError({
+            'code': 'Unauthorize',
+            'description':'permission not found'
+        }, 403)
+    
+    return True
 
 
 
@@ -159,6 +171,8 @@ def check_permissions(permission, payload):
     it should use the check_permissions method validate claims and check the requested permission
     return the decorator which passes the decoded payload to the decorated method
 '''
+
+
 def requires_auth(permission=''):
     def requires_auth_decorator(f):
         @wraps(f)
@@ -167,6 +181,5 @@ def requires_auth(permission=''):
             payload = verify_decode_jwt(token)
             check_permissions(permission, payload)
             return f(payload, *args, **kwargs)
-
         return wrapper
     return requires_auth_decorator
