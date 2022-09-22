@@ -64,8 +64,14 @@ class Drink(db.Model):
     '''
 
     def short(self):
-        print(json.loads(self.recipe))
-        short_recipe = [{'color': r['color'], 'parts': r['parts']} for r in json.loads(self.recipe)]
+       
+        splitted_recipe =  self.recipe.split('} ')
+        val = []
+        short_recipe=[]
+        for index in  range(len(splitted_recipe)):
+            val.append(splitted_recipe[index])
+            short_recipe.append(''.join(val)[1:-1])
+      
         return {
             'id': self.id,
             'title': self.title,
