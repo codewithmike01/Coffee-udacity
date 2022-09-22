@@ -20,13 +20,15 @@ CORS(app)
 
 # Get all Drinks Short
 @app.route('/drinks', methods=['GET'])
-def get_drinks():
+@requires_auth('get:drinks')
+def get_drinks(jwt):
     drinks = Drink.query.all()
 
     if drinks is Empty:
         abort(404)
-
+        
     drink_short = [ drink.short() for drink in drinks]
+    
 
     return jsonify({
        "success":True,
@@ -41,6 +43,7 @@ def get_drinks():
 def get_drink(jwt):
     drinks = Drink.query.all()
 
+  
     drink_long = [ drink.long() for drink in drinks]
     return jsonify({
         "success":True,
@@ -53,14 +56,18 @@ def get_drink(jwt):
 @requires_auth('post:drinks')
 def create_drink(jwt):
     body = request.get_json()
-    new_title = body.get('title', None)
-    new_recipe = json.dumps(body.get('recipe',None))
-    drink = Drink( title = new_title, recipe = new_recipe)
-    drink.insert()
-    return jsonify({
-        'success': True,
-        "drinks": drink.long()
-    })
+   
+    if body is not None:
+        new_title = body.get('title', None)
+        new_recipe = json.dumps(body.get('recipe',None))
+        drink = Drink( title = new_title, recipe = new_recipe)
+        drink.insert()
+        return jsonify({
+            'success': True,
+            "drinks": drink.long()
+        })
+    else:
+         abort(404)
 
 
 # Update Drinks
@@ -69,26 +76,33 @@ def create_drink(jwt):
 def update_drink(jwt, id):
     drink = Drink.query.get(id)
     body = request.get_json()
-    new_title = body.get('title',None)
-    new_recipe = body.get('recipe', None)
 
-    if drink is None:
+    if body is not None:
+        new_title = body.get('title',None)
+        new_recipe = body.get('recipe', None)
+
+        if drink is None:
+            abort(404)
+
+        if new_title is not None:
+            drink.title = new_title
+    
+        if new_recipe is not None:
+            new_recipe = json.dumps(new_recipe)
+            drink.recipe = new_recipe
+    
+        drinks = Drink.query.all()
+        drink_short = [ drink.short() for drink in drinks]
+        drink.insert()
+
+        return jsonify({
+            "success": True,
+            "drinks": drink_short
+        })
+    else:
         abort(404)
 
-    if new_title is not None:
-        drink.title = new_title
-  
-
-    if new_recipe is not None:
-        new_recipe = json.dumps(new_recipe)
-        drink.recipe = new_recipe
-   
-    drink.insert()
-    return jsonify({
-        "success": True,
-        "drinks": drink.long()
-    })
-
+        
 # Delete Drink
 @app.route('/drinks/<int:id>', methods=['DELETE'])
 @requires_auth('patch:drinks')
@@ -107,8 +121,6 @@ def delete_drink(jwt, id):
 
 # Error Handling
 
-
-
 @app.errorhandler(422)
 def unprocessable(error):
     return jsonify({
@@ -126,9 +138,3 @@ def unprocessable(error):
         "error": 404,
         "message": "resource not found"
     }), 404
-
-
-raise AuthError({
-    'code': 'invalid_Api end point',
-    'description': 'Unable to find the api endpoint'
-},400)

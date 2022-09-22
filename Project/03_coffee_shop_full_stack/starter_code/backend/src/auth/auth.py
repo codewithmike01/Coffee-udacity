@@ -18,7 +18,7 @@ class AuthError(Exception):
     def __init__(self, error, status_code):
         self.error = error
         self.status_code = status_code
-
+       
 
 
 # Verify
@@ -117,12 +117,12 @@ def check_permissions(permission, payload):
             'description': 'Permission not included in jwt'
         },400)
 
+   
     if permission not in payload['permissions']:
         raise AuthError({
-            'code': 'Unauthorize',
-            'description':'permission not found'
-        }, 403)
-    
+                    'code': 'Unauthorize',
+                    'description':'permission not found'
+                }, 403)
     return True
 
 
