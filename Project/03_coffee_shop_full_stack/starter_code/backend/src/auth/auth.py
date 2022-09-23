@@ -16,13 +16,18 @@ A standardized way to communicate auth failure modes
 '''
 class AuthError(Exception):
     def __init__(self, error, status_code):
+        print('Exception here', error)
         self.error = error
         self.status_code = status_code
+    
+    
+  
        
 
 
 # Verify
 def verify_decode_jwt(token):
+  
     #Get Data In Header
     jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
     jwks = json.loads(jsonurl.read())
@@ -105,6 +110,7 @@ def get_token_auth_header():
                 'code': 'invalid_claims',
                 'description': 'Incorrect jwt'
             }, 401)
+
     
     return(auth_path[1])
 
@@ -123,6 +129,7 @@ def check_permissions(permission, payload):
                     'code': 'Unauthorize',
                     'description':'permission not found'
                 }, 403)
+        
     return True
 
 

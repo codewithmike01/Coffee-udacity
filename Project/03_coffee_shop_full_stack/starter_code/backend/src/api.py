@@ -20,8 +20,7 @@ CORS(app)
 
 # Get all Drinks Short
 @app.route('/drinks', methods=['GET'])
-@requires_auth('get:drinks')
-def get_drinks(jwt):
+def get_drinks():
     drinks = Drink.query.all()
 
     if drinks is Empty:
@@ -102,7 +101,7 @@ def update_drink(jwt, id):
     else:
         abort(404)
 
-        
+
 # Delete Drink
 @app.route('/drinks/<int:id>', methods=['DELETE'])
 @requires_auth('patch:drinks')
@@ -138,3 +137,9 @@ def unprocessable(error):
         "error": 404,
         "message": "resource not found"
     }), 404
+
+@app.errorhandler(AuthError)
+def auth_error(error):
+    response = jsonify(error.error)
+    response.status_code = error.status_code
+    return response
