@@ -16,7 +16,7 @@ A standardized way to communicate auth failure modes
 '''
 class AuthError(Exception):
     def __init__(self, error, status_code):
-        print('Exception here', error)
+       
         self.error = error
         self.status_code = status_code
     
