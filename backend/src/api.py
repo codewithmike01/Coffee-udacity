@@ -14,7 +14,7 @@ setup_db(app)
 CORS(app)
 
 # Uncomment for first run
-db_drop_and_create_all()
+# db_drop_and_create_all()
 
 # ROUTES
 
